@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Voice Notes</string>
+    <string name="accessibility_service_description">Allows you to start/stop voice recording by holding the Volume Up button for 1 second, even when the screen is locked. This service only listens to volume button presses and does not access any other information.</string>
+</resources>
