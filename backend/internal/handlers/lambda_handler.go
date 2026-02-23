@@ -4,165 +4,101 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/json"
-	"fmt"
 	"io"
-	"mime"
-	"mime/multipart"
-	"os"
-	"path/filepath"
+	"net/http"
+	"net/http/httptest"
 	"strings"
-	"time"
 	"upload-lambda/internal/services"
 
 	"github.com/aws/aws-lambda-go/events"
 )
 
-// LambdaHandler handles AWS Lambda requests
+// LambdaHandler handles AWS Lambda requests by delegating to the HTTP router
 type LambdaHandler struct {
-	service services.ExpenseService
+	router http.Handler
 }
 
-// NewLambdaHandler creates a new Lambda handler
+// NewLambdaHandler creates a new Lambda handler that uses the HTTP router
 func NewLambdaHandler(service services.ExpenseService) *LambdaHandler {
 	return &LambdaHandler{
-		service: service,
+		router: NewRouter(service),
 	}
 }
 
-// Handle processes Lambda events
+// Handle processes Lambda events by converting them to HTTP requests
 func (h *LambdaHandler) Handle(ctx context.Context, request events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
-	// Validate Content-Type
-	contentType := request.Headers["content-type"]
-	if !strings.Contains(contentType, "multipart/form-data") {
-		return errorResponse(400, "Content-Type must be multipart/form-data"), nil
+	// Get path and method
+	path := request.RawPath
+	if path == "" {
+		path = request.RequestContext.HTTP.Path
 	}
+	method := request.RequestContext.HTTP.Method
 
-	// Decode body
-	var bodyBytes []byte
+	// Decode body if base64 encoded
+	var bodyReader io.Reader
 	if request.IsBase64Encoded {
 		decoded, err := base64.StdEncoding.DecodeString(request.Body)
 		if err != nil {
 			return errorResponse(400, "Failed to decode base64 body"), nil
 		}
-		bodyBytes = decoded
+		bodyReader = bytes.NewReader(decoded)
 	} else {
-		bodyBytes = []byte(request.Body)
+		bodyReader = strings.NewReader(request.Body)
 	}
 
-	// Parse multipart form
-	_, params, err := mime.ParseMediaType(contentType)
+	// Create HTTP request
+	httpReq, err := http.NewRequestWithContext(ctx, method, path, bodyReader)
 	if err != nil {
-		return errorResponse(400, "Failed to parse Content-Type"), nil
+		return errorResponse(500, "Failed to create HTTP request"), nil
 	}
 
-	boundary, ok := params["boundary"]
-	if !ok {
-		return errorResponse(400, "No boundary in Content-Type"), nil
+	// Copy headers
+	for key, value := range request.Headers {
+		httpReq.Header.Set(key, value)
 	}
 
-	reader := multipart.NewReader(bytes.NewReader(bodyBytes), boundary)
-
-	var audioFilePath string
-	var purchasedAtStr string
-
-	// Process multipart parts
-	for {
-		part, err := reader.NextPart()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return errorResponse(400, "Failed to read multipart data"), nil
-		}
-
-		fieldName := part.FormName()
-
-		if fieldName == "audio" {
-			filename := part.FileName()
-			if filename == "" {
-				part.Close()
-				continue
-			}
-
-			// Sanitize filename
-			safeName := filepath.Base(filename)
-			savePath := filepath.Join("/tmp", safeName)
-
-			// Create file
-			file, err := os.Create(savePath)
-			if err != nil {
-				part.Close()
-				return errorResponse(500, "Failed to create file"), nil
-			}
-
-			// Copy file content
-			_, err = io.Copy(file, part)
-			file.Close()
-			part.Close()
-
-			if err != nil {
-				return errorResponse(500, "Failed to save file"), nil
-			}
-
-			audioFilePath = savePath
-		} else if fieldName == "purchased_at" {
-			buf := new(bytes.Buffer)
-			buf.ReadFrom(part)
-			purchasedAtStr = buf.String()
-			part.Close()
-		} else {
-			part.Close()
-		}
+	// Copy query parameters
+	q := httpReq.URL.Query()
+	for key, value := range request.QueryStringParameters {
+		q.Set(key, value)
 	}
+	httpReq.URL.RawQuery = q.Encode()
 
-	// Check if file was uploaded
-	if audioFilePath == "" {
-		return errorResponse(400, "No audio file provided"), nil
-	}
+	// Create response recorder
+	recorder := httptest.NewRecorder()
 
-	// Parse purchased_at (optional, defaults to now)
-	var purchasedAt time.Time
-	if purchasedAtStr != "" {
-		purchasedAt, err = time.Parse(time.RFC3339, purchasedAtStr)
-		if err != nil {
-			return errorResponse(400, fmt.Sprintf("Invalid purchased_at format (expected RFC3339): %v", err)), nil
-		}
-	} else {
-		purchasedAt = time.Now().UTC()
-	}
+	// Delegate to router
+	h.router.ServeHTTP(recorder, httpReq)
 
-	// Ensure cleanup
-	defer os.Remove(audioFilePath)
+	// Convert HTTP response to API Gateway response
+	result := recorder.Result()
+	defer result.Body.Close()
 
-	// Process expenses using service (may be multiple)
-	expenses, err := h.service.ProcessAudioExpense(ctx, audioFilePath, purchasedAt)
+	responseBody, err := io.ReadAll(result.Body)
 	if err != nil {
-		return errorResponse(500, fmt.Sprintf("Failed to process expenses: %v", err)), nil
+		return errorResponse(500, "Failed to read response body"), nil
 	}
 
-	// Return success response
-	responseBody, err := json.Marshal(expenses)
-	if err != nil {
-		return errorResponse(500, "Failed to marshal response"), nil
+	// Copy headers
+	headers := make(map[string]string)
+	for key, values := range result.Header {
+		if len(values) > 0 {
+			headers[key] = values[0]
+		}
 	}
 
 	return events.APIGatewayV2HTTPResponse{
-		StatusCode: 200,
+		StatusCode: result.StatusCode,
+		Headers:    headers,
 		Body:       string(responseBody),
-		Headers: map[string]string{
-			"Content-Type": "application/json",
-		},
 	}, nil
 }
 
 func errorResponse(statusCode int, message string) events.APIGatewayV2HTTPResponse {
-	errorResp := map[string]string{"error": message}
-	body, _ := json.Marshal(errorResp)
-
+	body := `{"error":"` + message + `"}`
 	return events.APIGatewayV2HTTPResponse{
 		StatusCode: statusCode,
-		Body:       string(body),
+		Body:       body,
 		Headers: map[string]string{
 			"Content-Type": "application/json",
 		},
