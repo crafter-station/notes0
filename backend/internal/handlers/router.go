@@ -22,6 +22,7 @@ func NewRouter(service services.ExpenseService) http.Handler {
 
 	// Routes
 	r.Post("/upload", expenseHandler.HandleUpload)
+	r.Get("/expenses", expenseHandler.HandleList)
 
 	// Health check
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {

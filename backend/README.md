@@ -121,6 +121,89 @@ curl -X POST http://localhost:8080/upload \
 - `audio` (required): Audio file (m4a, mp3, wav, etc.)
 - `purchased_at` (optional): Purchase date/time in RFC3339 format (e.g., `2026-02-22T10:30:00Z`). Defaults to current time if not provided.
 
+## API Endpoints
+
+### POST /upload
+
+Upload audio file and extract expenses.
+
+**Request:**
+```bash
+curl -X POST http://localhost:8080/upload \
+  -F "audio=@audio.m4a" \
+  -F "purchased_at=2026-02-22T10:30:00Z"
+```
+
+**Response:**
+```json
+[
+  {
+    "id": "uuid",
+    "unit_price": 1.75,
+    "quantity": 2.0,
+    "unit": "kg",
+    "description": "rice",
+    "purchased_at": "2026-02-22T10:30:00Z",
+    "created_at": "2026-02-23T15:00:00Z"
+  }
+]
+```
+
+### GET /expenses
+
+List expenses with pagination and sorting.
+
+**Query Parameters:**
+- `page` (optional): Page number (default: 1)
+- `per_page` (optional): Items per page (default: 10, max: 100)
+- `order[by]` (optional): Sort field - `purchased_at` or `created_at` (default: `created_at`)
+- `order[dir]` (optional): Sort direction - `asc` or `desc` (default: `desc`)
+
+**Request:**
+```bash
+# Get first page with default settings
+curl http://localhost:8080/expenses
+
+# Get page 2 with 20 items, sorted by purchased_at ascending
+curl "http://localhost:8080/expenses?page=2&per_page=20&order[by]=purchased_at&order[dir]=asc"
+```
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid-1",
+      "unit_price": 1.75,
+      "quantity": 2.0,
+      "unit": "kg",
+      "description": "rice",
+      "purchased_at": "2026-02-22T10:30:00Z",
+      "created_at": "2026-02-23T15:00:00Z"
+    },
+    {
+      "id": "uuid-2",
+      "unit_price": 0.50,
+      "quantity": 3.0,
+      "unit": "pasaje",
+      "description": "bus",
+      "purchased_at": "2026-02-21T08:15:00Z",
+      "created_at": "2026-02-23T14:45:00Z"
+    }
+  ],
+  "page": 1,
+  "per_page": 10,
+  "total": 2,
+  "total_pages": 1
+}
+```
+
+### GET /health
+
+Health check endpoint.
+
+**Response:** `OK` (200)
+
 ## Makefile Commands
 
 | Command | Description |

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"upload-lambda/internal/models"
 	"upload-lambda/internal/services"
 )
 
@@ -84,4 +85,59 @@ func (h *ExpenseHandler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(expenses)
+}
+
+// HandleList handles the listing of expenses with pagination
+func (h *ExpenseHandler) HandleList(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse query parameters
+	query := r.URL.Query()
+
+	// Get page (default: 1)
+	page := 1
+	if pageStr := query.Get("page"); pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+	}
+
+	// Get per_page (default: 10, max: 100)
+	perPage := 10
+	if perPageStr := query.Get("per_page"); perPageStr != "" {
+		fmt.Sscanf(perPageStr, "%d", &perPage)
+	}
+
+	// Get order[by] (default: created_at)
+	orderBy := query.Get("order[by]")
+	if orderBy == "" {
+		orderBy = "created_at"
+	}
+
+	// Get order[dir] (default: desc)
+	orderDir := query.Get("order[dir]")
+	if orderDir == "" {
+		orderDir = "desc"
+	}
+
+	// Create params
+	params := models.ListExpensesParams{
+		Page:     page,
+		PerPage:  perPage,
+		OrderBy:  orderBy,
+		OrderDir: orderDir,
+	}
+
+	// Call service
+	result, err := h.service.ListExpenses(r.Context(), params)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to list expenses: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Return success
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(result)
 }

@@ -13,6 +13,7 @@ import (
 // ExpenseService defines the interface for expense business logic
 type ExpenseService interface {
 	ProcessAudioExpense(ctx context.Context, audioPath string, purchasedAt time.Time) ([]*models.Expense, error)
+	ListExpenses(ctx context.Context, params models.ListExpensesParams) (*models.PaginatedExpenses, error)
 }
 
 type expenseService struct {
@@ -86,4 +87,18 @@ func (s *expenseService) ProcessAudioExpense(ctx context.Context, audioPath stri
 
 	log.Printf("All %d expense(s) created successfully", len(expenses))
 	return expenses, nil
+}
+
+func (s *expenseService) ListExpenses(ctx context.Context, params models.ListExpensesParams) (*models.PaginatedExpenses, error) {
+	log.Printf("Listing expenses: page=%d, per_page=%d, order_by=%s, order_dir=%s",
+		params.Page, params.PerPage, params.OrderBy, params.OrderDir)
+
+	result, err := s.expenseRepo.List(ctx, params)
+	if err != nil {
+		log.Printf("Failed to list expenses: %v", err)
+		return nil, err
+	}
+
+	log.Printf("Retrieved %d expenses (page %d of %d)", len(result.Data), result.Page, result.TotalPages)
+	return result, nil
 }
