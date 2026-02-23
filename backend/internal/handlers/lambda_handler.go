@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 	"upload-lambda/internal/services"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -63,6 +64,7 @@ func (h *LambdaHandler) Handle(ctx context.Context, request events.APIGatewayV2H
 	reader := multipart.NewReader(bytes.NewReader(bodyBytes), boundary)
 
 	var audioFilePath string
+	var purchasedAtStr string
 
 	// Process multipart parts
 	for {
@@ -104,6 +106,11 @@ func (h *LambdaHandler) Handle(ctx context.Context, request events.APIGatewayV2H
 			}
 
 			audioFilePath = savePath
+		} else if fieldName == "purchased_at" {
+			buf := new(bytes.Buffer)
+			buf.ReadFrom(part)
+			purchasedAtStr = buf.String()
+			part.Close()
 		} else {
 			part.Close()
 		}
@@ -114,11 +121,22 @@ func (h *LambdaHandler) Handle(ctx context.Context, request events.APIGatewayV2H
 		return errorResponse(400, "No audio file provided"), nil
 	}
 
+	// Parse purchased_at (optional, defaults to now)
+	var purchasedAt time.Time
+	if purchasedAtStr != "" {
+		purchasedAt, err = time.Parse(time.RFC3339, purchasedAtStr)
+		if err != nil {
+			return errorResponse(400, fmt.Sprintf("Invalid purchased_at format (expected RFC3339): %v", err)), nil
+		}
+	} else {
+		purchasedAt = time.Now().UTC()
+	}
+
 	// Ensure cleanup
 	defer os.Remove(audioFilePath)
 
 	// Process expenses using service (may be multiple)
-	expenses, err := h.service.ProcessAudioExpense(ctx, audioFilePath)
+	expenses, err := h.service.ProcessAudioExpense(ctx, audioFilePath, purchasedAt)
 	if err != nil {
 		return errorResponse(500, fmt.Sprintf("Failed to process expenses: %v", err)), nil
 	}

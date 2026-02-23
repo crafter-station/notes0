@@ -52,7 +52,7 @@ func (r *openAIRepo) ExtractExpenseData(ctx context.Context, transcription strin
 	prompt := fmt.Sprintf(`You are an expense parser. Extract ALL expenses from the Spanish text. There may be one or multiple expenses.
 
 For EACH expense, extract:
-- total: the total price for that item (decimal number)
+- unit_price: the price per unit (decimal number)
 - quantity: the quantity purchased (decimal number, use 1.0 if not specified)
 - unit: the unit of measurement (string: "kg", "litro", "pasaje", "u" for generic units). Default to "u" if not specified
 - description: short product description (string)
@@ -61,8 +61,8 @@ Text: "%s"
 
 Respond ONLY with a valid JSON array of expenses in this exact format:
 [
-  {"total": 0.0, "quantity": 0.0, "unit": "u", "description": ""},
-  {"total": 0.0, "quantity": 0.0, "unit": "kg", "description": ""}
+  {"unit_price": 0.0, "quantity": 0.0, "unit": "u", "description": ""},
+  {"unit_price": 0.0, "quantity": 0.0, "unit": "kg", "description": ""}
 ]
 
 If there's only one expense, still return an array with one element.

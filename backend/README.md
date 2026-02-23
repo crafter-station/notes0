@@ -6,10 +6,10 @@ Go API that processes expense audio recordings, extracts structured information 
 
 ## Features
 
-1. **Receives** audio file via multipart/form-data
+1. **Receives** audio file and optional `purchased_at` via multipart/form-data
 2. **Transcribes** audio to text using OpenAI Whisper
 3. **Extracts** structured data using OpenAI GPT-4:
-   - `total`: total price (float64)
+   - `unit_price`: price per unit (float64)
    - `quantity`: quantity purchased (float64)
    - `unit`: unit of measurement (string: "kg", "litro", "pasaje", "u")
    - `description`: product description (string)
@@ -21,25 +21,27 @@ Go API that processes expense audio recordings, extracts structured information 
 
 The API can detect and process **multiple expenses** from a single audio file.
 
-**Example Audio:** "I bought 2kg of rice at $3.50 and 1 liter of oil at $4.20"
+**Example Audio:** "I bought 2kg of rice at $3.50 per kilo and 1 liter of oil at $4.20"
 
 **Response:**
 ```json
 [
   {
     "id": "uuid-1",
-    "total": 3.50,
+    "unit_price": 3.50,
     "quantity": 2.0,
     "unit": "kg",
     "description": "rice",
+    "purchased_at": "2026-02-22T10:30:00Z",
     "created_at": "2026-02-22T18:00:00Z"
   },
   {
     "id": "uuid-2",
-    "total": 4.20,
+    "unit_price": 4.20,
     "quantity": 1.0,
     "unit": "litro",
     "description": "oil",
+    "purchased_at": "2026-02-22T10:30:00Z",
     "created_at": "2026-02-22T18:00:01Z"
   }
 ]
@@ -105,9 +107,19 @@ You should see:
 ### 5. Test Locally
 
 ```bash
+# Basic request (purchased_at defaults to current time)
 curl -X POST http://localhost:8080/upload \
   -F "audio=@test-expense.m4a"
+
+# With custom purchased_at (RFC3339 format)
+curl -X POST http://localhost:8080/upload \
+  -F "audio=@test-expense.m4a" \
+  -F "purchased_at=2026-02-22T10:30:00Z"
 ```
+
+**Form Fields:**
+- `audio` (required): Audio file (m4a, mp3, wav, etc.)
+- `purchased_at` (optional): Purchase date/time in RFC3339 format (e.g., `2026-02-22T10:30:00Z`). Defaults to current time if not provided.
 
 ## Makefile Commands
 

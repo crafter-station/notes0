@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 	"upload-lambda/internal/services"
 )
 
@@ -36,6 +37,19 @@ func (h *ExpenseHandler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get purchased_at from form (optional, defaults to now)
+	purchasedAtStr := r.FormValue("purchased_at")
+	var purchasedAt time.Time
+	if purchasedAtStr != "" {
+		purchasedAt, err = time.Parse(time.RFC3339, purchasedAtStr)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid purchased_at format (expected RFC3339): %v", err), http.StatusBadRequest)
+			return
+		}
+	} else {
+		purchasedAt = time.Now().UTC()
+	}
+
 	// Get audio file
 	file, header, err := r.FormFile("audio")
 	if err != nil {
@@ -60,7 +74,7 @@ func (h *ExpenseHandler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Process expenses (may be multiple)
-	expenses, err := h.service.ProcessAudioExpense(r.Context(), tmpFile.Name())
+	expenses, err := h.service.ProcessAudioExpense(r.Context(), tmpFile.Name(), purchasedAt)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to process expenses: %v", err), http.StatusInternalServerError)
 		return

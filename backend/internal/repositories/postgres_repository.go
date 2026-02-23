@@ -38,16 +38,17 @@ func (r *postgresRepo) Create(ctx context.Context, expense *models.Expense) erro
 	}
 
 	query := `
-		INSERT INTO expenses (id, total, quantity, unit, description, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO expenses (id, unit_price, quantity, unit, description, purchased_at, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 
 	_, err = db.ExecContext(ctx, query,
 		expense.ID,
-		expense.Total,
+		expense.UnitPrice,
 		expense.Quantity,
 		expense.Unit,
 		expense.Description,
+		expense.PurchasedAt,
 		expense.CreatedAt,
 	)
 
@@ -70,7 +71,7 @@ func (r *postgresRepo) FindByID(ctx context.Context, id string) (*models.Expense
 	}
 
 	query := `
-		SELECT id, total, quantity, unit, description, created_at
+		SELECT id, unit_price, quantity, unit, description, purchased_at, created_at
 		FROM expenses
 		WHERE id = $1
 	`
@@ -78,10 +79,11 @@ func (r *postgresRepo) FindByID(ctx context.Context, id string) (*models.Expense
 	var expense models.Expense
 	err = db.QueryRowContext(ctx, query, id).Scan(
 		&expense.ID,
-		&expense.Total,
+		&expense.UnitPrice,
 		&expense.Quantity,
 		&expense.Unit,
 		&expense.Description,
+		&expense.PurchasedAt,
 		&expense.CreatedAt,
 	)
 

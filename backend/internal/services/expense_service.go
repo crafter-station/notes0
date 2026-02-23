@@ -12,7 +12,7 @@ import (
 
 // ExpenseService defines the interface for expense business logic
 type ExpenseService interface {
-	ProcessAudioExpense(ctx context.Context, audioPath string) ([]*models.Expense, error)
+	ProcessAudioExpense(ctx context.Context, audioPath string, purchasedAt time.Time) ([]*models.Expense, error)
 }
 
 type expenseService struct {
@@ -31,7 +31,7 @@ func NewExpenseService(
 	}
 }
 
-func (s *expenseService) ProcessAudioExpense(ctx context.Context, audioPath string) ([]*models.Expense, error) {
+func (s *expenseService) ProcessAudioExpense(ctx context.Context, audioPath string, purchasedAt time.Time) ([]*models.Expense, error) {
 	// Step 1: Transcribe audio
 	log.Printf("Transcribing audio: %s", audioPath)
 	transcription, err := s.openaiRepo.TranscribeAudio(ctx, audioPath)
@@ -59,15 +59,16 @@ func (s *expenseService) ProcessAudioExpense(ctx context.Context, audioPath stri
 			unit = "u"
 		}
 
-		log.Printf("Processing expense %d/%d: total=%.2f, quantity=%.2f, unit=%s, description=%s",
-			i+1, len(expensesData), data.Total, data.Quantity, unit, data.Description)
+		log.Printf("Processing expense %d/%d: unit_price=%.2f, quantity=%.2f, unit=%s, description=%s",
+			i+1, len(expensesData), data.UnitPrice, data.Quantity, unit, data.Description)
 
 		expense := &models.Expense{
 			ID:          uuid.New().String(),
-			Total:       data.Total,
+			UnitPrice:   data.UnitPrice,
 			Quantity:    data.Quantity,
 			Unit:        unit,
 			Description: data.Description,
+			PurchasedAt: purchasedAt,
 			CreatedAt:   time.Now().UTC(),
 		}
 
