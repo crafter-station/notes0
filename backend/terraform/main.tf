@@ -91,6 +91,18 @@ resource "aws_apigatewayv2_route" "upload_route" {
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
+resource "aws_apigatewayv2_route" "expenses_route" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "GET /expenses"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
+resource "aws_apigatewayv2_route" "health_route" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "GET /health"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
 resource "aws_apigatewayv2_stage" "dev" {
   api_id      = aws_apigatewayv2_api.api.id
   name        = "$default"

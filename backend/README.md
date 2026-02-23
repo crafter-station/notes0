@@ -363,9 +363,21 @@ Terraform will:
 
 ### 3. Test Production
 
+**Upload audio and extract expenses:**
 ```bash
 curl -X POST https://<api-url>/upload \
-  -F "audio=@test-expense.m4a"
+  -F "audio=@test-expense.m4a" \
+  -F "purchased_at=2026-02-22T10:30:00Z"
+```
+
+**List expenses:**
+```bash
+curl "https://<api-url>/expenses?page=1&per_page=10&order[by]=created_at&order[dir]=desc"
+```
+
+**Health check:**
+```bash
+curl https://<api-url>/health
 ```
 
 ### 4. Destroy Resources
@@ -396,6 +408,16 @@ The code automatically detects the environment:
 - **Timeout:** 90 seconds
 - **Memory:** 512 MB
 - **Handler:** bootstrap
+
+### Available Endpoints in Lambda
+
+The Lambda deployment includes API Gateway routes for all endpoints:
+
+- ✅ `POST /upload` - Upload audio and extract expenses
+- ✅ `GET /expenses` - List expenses with pagination
+- ✅ `GET /health` - Health check
+
+All routes are automatically configured by Terraform and handled by the same Lambda function.
 
 ## Dependencies
 
