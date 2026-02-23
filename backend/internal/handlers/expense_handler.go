@@ -25,6 +25,17 @@ func NewExpenseHandler(service services.ExpenseService) *ExpenseHandler {
 }
 
 // HandleUpload handles the upload of audio files
+// @Summary Upload audio and extract expenses
+// @Description Uploads an audio file, transcribes it using OpenAI Whisper, and extracts expense data using GPT-4
+// @Tags expenses
+// @Accept multipart/form-data
+// @Produce json
+// @Param audio formData file true "Audio file (m4a, mp3, wav, etc.)"
+// @Param purchased_at formData string false "Purchase date/time in RFC3339 format (e.g., 2026-02-22T10:30:00Z)"
+// @Success 200 {array} models.Expense "List of extracted expenses"
+// @Failure 400 {object} map[string]string "Bad request"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /upload [post]
 func (h *ExpenseHandler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -88,6 +99,17 @@ func (h *ExpenseHandler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleList handles the listing of expenses with pagination
+// @Summary List expenses with pagination
+// @Description Retrieves a paginated list of expenses with optional sorting
+// @Tags expenses
+// @Produce json
+// @Param page query int false "Page number (default: 1)"
+// @Param per_page query int false "Items per page (default: 10, max: 100)"
+// @Param order[by] query string false "Sort field: purchased_at or created_at (default: created_at)"
+// @Param order[dir] query string false "Sort direction: asc or desc (default: desc)"
+// @Success 200 {object} models.PaginatedExpenses "Paginated list of expenses"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /expenses [get]
 func (h *ExpenseHandler) HandleList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

@@ -23,6 +23,8 @@ install: ## Install dependencies and tools
 	go mod tidy
 	@echo "🔧 Installing goose..."
 	go install github.com/pressly/goose/v3/cmd/goose@latest
+	@echo "🔧 Installing swag..."
+	go install github.com/swaggo/swag/cmd/swag@latest
 	@echo "✅ Installation complete"
 
 run: ## Run the application locally
@@ -108,6 +110,15 @@ fmt: ## Format code
 	@echo "🎨 Formatting code..."
 	go fmt ./...
 	@echo "✅ Format complete"
+
+swagger: ## Generate Swagger documentation
+	@echo "📚 Generating Swagger documentation..."
+	@if ! command -v swag &> /dev/null; then \
+		echo "⚠️  swag not installed. Installing..."; \
+		go install github.com/swaggo/swag/cmd/swag@latest; \
+	fi
+	swag init
+	@echo "✅ Swagger documentation generated in ./docs"
 
 lint: ## Run linter
 	@echo "🔍 Running linter..."

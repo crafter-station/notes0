@@ -1,0 +1,128 @@
+basePath: /
+definitions:
+  models.Expense:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      purchased_at:
+        type: string
+      quantity:
+        type: number
+      unit:
+        type: string
+      unit_price:
+        type: number
+    type: object
+  models.PaginatedExpenses:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.Expense'
+        type: array
+      page:
+        type: integer
+      per_page:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@example.com
+    name: API Support
+  description: API that processes expense audio recordings, extracts structured information
+    using OpenAI, and stores data in PostgreSQL.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Expense Audio Processing API
+  version: "1.0"
+paths:
+  /expenses:
+    get:
+      description: Retrieves a paginated list of expenses with optional sorting
+      parameters:
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Items per page (default: 10, max: 100)'
+        in: query
+        name: per_page
+        type: integer
+      - description: 'Sort field: purchased_at or created_at (default: created_at)'
+        in: query
+        name: order[by]
+        type: string
+      - description: 'Sort direction: asc or desc (default: desc)'
+        in: query
+        name: order[dir]
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Paginated list of expenses
+          schema:
+            $ref: '#/definitions/models.PaginatedExpenses'
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List expenses with pagination
+      tags:
+      - expenses
+  /upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads an audio file, transcribes it using OpenAI Whisper, and
+        extracts expense data using GPT-4
+      parameters:
+      - description: Audio file (m4a, mp3, wav, etc.)
+        in: formData
+        name: audio
+        required: true
+        type: file
+      - description: Purchase date/time in RFC3339 format (e.g., 2026-02-22T10:30:00Z)
+        in: formData
+        name: purchased_at
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of extracted expenses
+          schema:
+            items:
+              $ref: '#/definitions/models.Expense'
+            type: array
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Upload audio and extract expenses
+      tags:
+      - expenses
+schemes:
+- http
+- https
+swagger: "2.0"

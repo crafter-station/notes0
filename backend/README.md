@@ -123,6 +123,8 @@ curl -X POST http://localhost:8080/upload \
 
 ## API Endpoints
 
+> 📚 **Interactive Documentation:** Full API documentation with try-it-out features is available at [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)
+
 ### POST /upload
 
 Upload audio file and extract expenses.
@@ -222,6 +224,47 @@ Health check endpoint.
 | `make clean` | Clean build artifacts |
 | `make test` | Run tests |
 | `make fmt` | Format code |
+| `make swagger` | Generate Swagger documentation |
+
+## API Documentation (Swagger)
+
+This API includes interactive Swagger/OpenAPI documentation.
+
+### Access Swagger UI
+
+Once the server is running, visit:
+
+```
+http://localhost:8080/swagger/index.html
+```
+
+### Generate Documentation
+
+After modifying API endpoints or adding new ones:
+
+```bash
+make swagger
+```
+
+This will regenerate the documentation in the `docs/` folder.
+
+### Swagger Annotations
+
+Handlers are documented using Swagger annotations. Example:
+
+```go
+// @Summary Upload audio and extract expenses
+// @Description Uploads an audio file, transcribes it, and extracts expense data
+// @Tags expenses
+// @Accept multipart/form-data
+// @Produce json
+// @Param audio formData file true "Audio file"
+// @Success 200 {array} models.Expense
+// @Router /upload [post]
+func (h *ExpenseHandler) HandleUpload(w http.ResponseWriter, r *http.Request) {
+    // ...
+}
+```
 
 ## Database Migrations
 

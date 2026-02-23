@@ -12,6 +12,22 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// @title Expense Audio Processing API
+// @version 1.0
+// @description API that processes expense audio recordings, extracts structured information using OpenAI, and stores data in PostgreSQL.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.email support@example.com
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /
+
+// @schemes http https
+
 func main() {
 	// Load environment variables from .env file (local development only)
 	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") == "" {
