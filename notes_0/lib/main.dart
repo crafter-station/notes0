@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/recording_provider.dart';
-import 'screens/home_screen.dart';
+import 'screens/main_navigation_screen.dart';
 
 void main() {
   runApp(const VoiceNotesApp());
@@ -35,7 +35,7 @@ class VoiceNotesApp extends StatelessWidget {
             ),
           ),
         ),
-        home: const HomeScreen(),
+        home: const MainNavigationScreen(),
       ),
     );
   }

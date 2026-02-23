@@ -43,8 +43,13 @@ class UploadService {
         );
       }
 
+      // Ensure endpoint has /upload
+      final uploadUrl = apiEndpoint.endsWith('/upload')
+          ? apiEndpoint
+          : '$apiEndpoint/upload';
+
       // Create multipart request
-      final request = http.MultipartRequest('POST', Uri.parse(apiEndpoint));
+      final request = http.MultipartRequest('POST', Uri.parse(uploadUrl));
 
       // Add audio file
       request.files.add(
@@ -55,9 +60,8 @@ class UploadService {
         ),
       );
 
-      // Add timestamp
-      request.fields['timestamp'] = recording.timestamp.millisecondsSinceEpoch
-          .toString();
+      // Add purchased_at timestamp in RFC3339 format
+      request.fields['purchased_at'] = recording.timestamp.toUtc().toIso8601String();
 
       // Send request
       final streamedResponse = await request.send().timeout(
