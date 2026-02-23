@@ -1,0 +1,12 @@
+# Copy this file to terraform.tfvars and fill in your actual values
+# DO NOT commit terraform.tfvars to git (it should be in .gitignore)
+
+# OpenAI API Key for Whisper (transcription) and GPT-4 (data extraction)
+# Get your API key from: https://platform.openai.com/api-keys
+openai_api_key = "sk-proj-..."
+
+# PostgreSQL connection string
+# Format: postgres://username:password@hostname:port/database?sslmode=require
+# Example with Supabase: postgres://postgres.xxx:password@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require
+# Example with local: postgres://postgres:password@localhost:5432/expenses?sslmode=disable
+db_url = "postgres://user:password@host:5432/database?sslmode=require"

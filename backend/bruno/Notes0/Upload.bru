@@ -1,0 +1,20 @@
+meta {
+  name: Upload
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8080/upload
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  audio: @file(C:\Users\Ignac\Documentos\Github\notes0\backend\record_out.m4a)
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

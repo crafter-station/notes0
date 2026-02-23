@@ -1,0 +1,67 @@
+# Go binaries
+bootstrap
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go build artifacts
+*.test
+*.out
+go.sum
+
+# Environment variables
+.env
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+.terraform.lock.hcl
+
+# Lambda build artifacts
+lambda.zip
+
+# Logs
+*.log
+
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files and backups
+*.tfstate
+*.tfstate.*.backup
+
+# Crash log files
+crash.log
+
+# Ignore variable files that may contain sensitive data
+# (tfvars files are generally managed as part of configuration, but use caution with secrets)
+# The following ignores all tfvars files:
+# *.tfvars
+# *.tfvars.json
+
+# If you choose to ignore all .tfvars, you can include specific files if needed:
+# !example.tfvars
+
+# Ignore override files as they are usually used for local development
+# and not checked into version control
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore transient lock info files created by terraform apply
+.terraform.tfstate.lock.info
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# Optional: ignore graph output files
+*.dot
+
+bootstrap
+*.m4a
