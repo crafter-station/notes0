@@ -80,9 +80,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-      ),
+      appBar: AppBar(title: const Text('Settings')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -116,10 +114,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 SizedBox(width: 12),
                 Text(
                   'API Configuration',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -147,7 +142,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : const Icon(Icons.save),
               label: Text(_isSaving ? 'Saving...' : 'Save Endpoint'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 12,
+                ),
               ),
             ),
           ],
@@ -203,8 +201,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, IconData icon,
-      {Color? color}) {
+  Widget _buildInfoRow(
+    String label,
+    String value,
+    IconData icon, {
+    Color? color,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -217,10 +219,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
                 Text(
                   value,
@@ -251,26 +250,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 SizedBox(width: 12),
                 Text(
                   'How to Use',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            _buildInstructionStep('1', 'Enable Accessibility Service (see above)'),
+            _buildInstructionStep(
+              '1',
+              'Enable Accessibility Service (see above)',
+            ),
             _buildInstructionStep('2', 'Lock your phone or turn off screen'),
             _buildInstructionStep('3', 'Press Power button to wake screen'),
             _buildInstructionStep(
-                '4', 'Hold Volume ↑ for 1 second to start recording'),
-            _buildInstructionStep('5', 'Phone will vibrate once - now recording'),
+              '4',
+              'Hold Volume ↑ for 1 second to start recording',
+            ),
+            _buildInstructionStep(
+              '5',
+              'Phone will vibrate once - now recording',
+            ),
             _buildInstructionStep('6', 'Speak your voice note'),
             _buildInstructionStep(
-                '7', 'Hold Volume ↑ for 1 second again to stop'),
-            _buildInstructionStep('8', 'Phone will vibrate twice - recording saved'),
+              '7',
+              'Hold Volume ↑ for 1 second again to stop',
+            ),
             _buildInstructionStep(
-                '9', 'Recording auto-uploads when on Wi-Fi'),
+              '8',
+              'Phone will vibrate twice - recording saved',
+            ),
+            _buildInstructionStep('9', 'Recording auto-uploads when on Wi-Fi'),
           ],
         ),
       ),
@@ -297,10 +305,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              instruction,
-              style: const TextStyle(fontSize: 14),
-            ),
+            child: Text(instruction, style: const TextStyle(fontSize: 14)),
           ),
         ],
       ),
@@ -317,7 +322,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.accessibility_new, color: Colors.orange.shade700, size: 28),
+                Icon(
+                  Icons.accessibility_new,
+                  color: Colors.orange.shade700,
+                  size: 28,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -344,7 +353,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.warning_amber, color: Colors.orange.shade700, size: 20),
+                      Icon(
+                        Icons.warning_amber,
+                        color: Colors.orange.shade700,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -410,7 +423,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // Note: This would need platform channel implementation
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Go to Settings → Accessibility → Downloaded apps → Voice Notes'),
+                    content: Text(
+                      'Go to Settings → Accessibility → Downloaded apps → Voice Notes',
+                    ),
                     duration: Duration(seconds: 5),
                   ),
                 );
@@ -418,7 +433,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: const Icon(Icons.settings),
               label: const Text('Open Accessibility Settings'),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
                 side: BorderSide(color: Colors.orange.shade700),
                 foregroundColor: Colors.orange.shade900,
               ),
@@ -429,7 +447,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSetupStep(String number, String title, String description, Color color) {
+  Widget _buildSetupStep(
+    String number,
+    String title,
+    String description,
+    Color color,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -463,10 +486,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -491,8 +511,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       provider.hasPermissions
                           ? Icons.check_circle
                           : Icons.warning,
-                      color:
-                          provider.hasPermissions ? Colors.green : Colors.orange,
+                      color: provider.hasPermissions
+                          ? Colors.green
+                          : Colors.orange,
                     ),
                     const SizedBox(width: 12),
                     const Text(
@@ -511,7 +532,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       : 'Some permissions are missing',
                   style: TextStyle(
                     fontSize: 14,
-                    color: provider.hasPermissions ? Colors.green : Colors.orange,
+                    color: provider.hasPermissions
+                        ? Colors.green
+                        : Colors.orange,
                   ),
                 ),
                 const SizedBox(height: 16),

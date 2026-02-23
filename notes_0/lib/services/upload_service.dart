@@ -2,6 +2,18 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/recording.dart';
 
+class RecordingUploadResult {
+  final bool success;
+  final String? error;
+  final int? statusCode;
+
+  RecordingUploadResult({
+    required this.success,
+    this.error,
+    this.statusCode,
+  });
+}
+
 class UploadService {
   static UploadService? _instance;
 
@@ -12,17 +24,23 @@ class UploadService {
 
   UploadService._internal();
 
-  Future<bool> uploadRecording(Recording recording, String apiEndpoint) async {
+  Future<RecordingUploadResult> uploadRecording(Recording recording, String apiEndpoint) async {
     if (apiEndpoint.isEmpty) {
       print('Upload failed: No API endpoint configured');
-      return false;
+      return RecordingUploadResult(
+        success: false,
+        error: 'No API endpoint configured',
+      );
     }
 
     try {
       final file = File(recording.filePath);
       if (!await file.exists()) {
         print('Upload failed: File does not exist: ${recording.filePath}');
-        return false;
+        return RecordingUploadResult(
+          success: false,
+          error: 'File does not exist',
+        );
       }
 
       // Create multipart request
@@ -38,7 +56,8 @@ class UploadService {
       );
 
       // Add timestamp
-      request.fields['timestamp'] = recording.timestamp.millisecondsSinceEpoch.toString();
+      request.fields['timestamp'] = recording.timestamp.millisecondsSinceEpoch
+          .toString();
 
       // Send request
       final streamedResponse = await request.send().timeout(
@@ -53,14 +72,22 @@ class UploadService {
       // Check if successful (2xx status codes)
       if (response.statusCode >= 200 && response.statusCode < 300) {
         print('Upload successful: ${recording.fileName}');
-        return true;
+        return RecordingUploadResult(success: true);
       } else {
+        final errorMsg = 'HTTP ${response.statusCode}: ${response.body}';
         print('Upload failed with status ${response.statusCode}: ${response.body}');
-        return false;
+        return RecordingUploadResult(
+          success: false,
+          error: errorMsg,
+          statusCode: response.statusCode,
+        );
       }
     } catch (e) {
       print('Upload error for ${recording.fileName}: $e');
-      return false;
+      return RecordingUploadResult(
+        success: false,
+        error: e.toString(),
+      );
     }
   }
 
@@ -72,17 +99,14 @@ class UploadService {
     int failedCount = 0;
 
     for (final recording in recordings) {
-      final success = await uploadRecording(recording, apiEndpoint);
-      if (success) {
+      final result = await uploadRecording(recording, apiEndpoint);
+      if (result.success) {
         successCount++;
       } else {
         failedCount++;
       }
     }
 
-    return {
-      'success': successCount,
-      'failed': failedCount,
-    };
+    return {'success': successCount, 'failed': failedCount};
   }
 }

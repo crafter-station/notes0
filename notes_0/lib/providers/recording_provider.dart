@@ -152,17 +152,27 @@ class RecordingProvider extends ChangeNotifier {
       final recordingsToDelete = <Recording>[];
 
       for (final recording in _recordings) {
-        final success = await _uploadService.uploadRecording(
+        // Mark as uploading
+        recording.uploadStatus = RecordingUploadStatus.uploading;
+        notifyListeners();
+
+        final result = await _uploadService.uploadRecording(
           recording,
           _apiEndpoint,
         );
 
-        if (success) {
+        if (result.success) {
           successCount++;
+          recording.uploadStatus = RecordingUploadStatus.success;
           recordingsToDelete.add(recording);
         } else {
           failedCount++;
+          recording.uploadStatus = RecordingUploadStatus.failed;
+          recording.uploadError = result.error;
+          recording.lastUploadAttempt = DateTime.now();
         }
+
+        notifyListeners();
       }
 
       // Delete successfully uploaded recordings from Android storage
@@ -190,7 +200,24 @@ class RecordingProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> onAppResume() async {
+    // Refresh data when app comes to foreground
+    await loadRecordings();
+
+    // Auto-upload if we have recordings and API endpoint configured
+    if (_recordings.isNotEmpty && _apiEndpoint.isNotEmpty) {
+      await triggerUpload();
+    }
+  }
+
+  Future<void> refreshData() async {
+    await loadRecordings();
+    notifyListeners();
+  }
+
   int get pendingRecordingsCount => _recordings.length;
+
+  int get failedRecordingsCount => _recordings.where((r) => r.hasFailed).length;
 
   bool get hasApiEndpoint => _apiEndpoint.isNotEmpty;
 }

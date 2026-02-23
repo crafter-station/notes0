@@ -5,8 +5,34 @@ import '../models/recording.dart';
 import '../models/upload_status.dart';
 import 'settings_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // App came to foreground - refresh and auto-upload
+      final provider = Provider.of<RecordingProvider>(context, listen: false);
+      provider.onAppResume();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -303,27 +329,147 @@ class HomeScreen extends StatelessWidget {
         );
       },
       child: ListTile(
-        leading: const CircleAvatar(
-          child: Icon(Icons.mic),
+        leading: CircleAvatar(
+          backgroundColor: _getStatusColor(recording),
+          child: _getStatusIcon(recording),
         ),
         title: Text(
           recording.fileName,
           style: const TextStyle(fontSize: 14),
         ),
-        subtitle: Text(
-          '${recording.formattedDuration} • ${recording.formattedSize}',
-          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-        ),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () {
-          // Could open a detailed view or play the recording
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Recording: ${recording.fileName}'),
-              duration: const Duration(seconds: 1),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${recording.formattedDuration} • ${recording.formattedSize}',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
-          );
+            if (recording.hasFailed && recording.uploadError != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                '❌ Upload failed: ${recording.uploadError}',
+                style: const TextStyle(fontSize: 11, color: Colors.red),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            if (recording.isUploading) ...[
+              const SizedBox(height: 4),
+              const Text(
+                'Uploading...',
+                style: TextStyle(fontSize: 11, color: Colors.blue),
+              ),
+            ],
+          ],
+        ),
+        trailing: _getTrailingWidget(recording),
+        onTap: () {
+          if (recording.hasFailed) {
+            _showErrorDialog(context, recording);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Recording: ${recording.fileName}'),
+                duration: const Duration(seconds: 1),
+              ),
+            );
+          }
         },
+      ),
+    );
+  }
+
+  Color _getStatusColor(Recording recording) {
+    if (recording.isUploading) {
+      return Colors.blue;
+    } else if (recording.isUploaded) {
+      return Colors.green;
+    } else if (recording.hasFailed) {
+      return Colors.red;
+    } else {
+      return Colors.grey;
+    }
+  }
+
+  Widget _getStatusIcon(Recording recording) {
+    if (recording.isUploading) {
+      return const SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        ),
+      );
+    } else if (recording.isUploaded) {
+      return const Icon(Icons.cloud_done, color: Colors.white);
+    } else if (recording.hasFailed) {
+      return const Icon(Icons.error, color: Colors.white);
+    } else {
+      return const Icon(Icons.mic, color: Colors.white);
+    }
+  }
+
+  Widget _getTrailingWidget(Recording recording) {
+    if (recording.hasFailed) {
+      return const Icon(Icons.info_outline, color: Colors.red);
+    } else if (recording.isUploading) {
+      return const SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    } else {
+      return const Icon(Icons.chevron_right);
+    }
+  }
+
+  void _showErrorDialog(BuildContext context, Recording recording) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red),
+            SizedBox(width: 12),
+            Text('Upload Error'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'File: ${recording.fileName}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text('Error: ${recording.uploadError ?? "Unknown error"}'),
+            if (recording.lastUploadAttempt != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Last attempt: ${recording.lastUploadAttempt!.toString().split('.')[0]}',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              // Retry upload for this specific recording
+              final provider = Provider.of<RecordingProvider>(context, listen: false);
+              provider.triggerUpload();
+            },
+            icon: const Icon(Icons.refresh),
+            label: const Text('Retry Upload'),
+          ),
+        ],
       ),
     );
   }
